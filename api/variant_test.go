@@ -23,7 +23,7 @@ func (suite *VariantTestSuite) SetupTest() {
 					Value: "Test 1",
 				},
 			},
-			Weight: 33,
+			Weight: 25,
 			Overrides: []Override{
 				Override{
 					ContextName: "userId",
@@ -47,7 +47,7 @@ func (suite *VariantTestSuite) SetupTest() {
 					Value: "Test 2",
 				},
 			},
-			Weight: 33,
+			Weight: 25,
 			Overrides: []Override{
 				Override{
 					ContextName: "remoteAddress",
@@ -65,12 +65,36 @@ func (suite *VariantTestSuite) SetupTest() {
 					Value: "Test 3",
 				},
 			},
-			Weight: 34,
+			Weight: 25,
 			Overrides: []Override{
 				Override{
 					ContextName: "env",
 					Values: []string{
 						"dev",
+					},
+				},
+			},
+		},
+		VariantInternal{
+			Variant: Variant{
+				Name: "VarG",
+				Payload: Payload{
+					Type:  "string",
+					Value: "Test 4",
+				},
+			},
+			Weight: 25,
+			Overrides: []Override{
+				Override{
+					ContextName: "environment",
+					Values: []string{
+						"development",
+					},
+				},
+				Override{
+					ContextName: "appName",
+					Values: []string{
+						"test",
 					},
 				},
 			},
@@ -262,4 +286,48 @@ func (suite *VariantTestSuite) TestGetVariant_ShouldReturnVarF() {
 func TestVariantSuite(t *testing.T) {
 	ts := VariantTestSuite{}
 	suite.Run(t, &ts)
+}
+
+func (suite *VariantTestSuite) TestGetVariant_OverrideOnAppName() {
+	mockFeature := Feature{
+		Name:     "test.variants",
+		Enabled:  true,
+		Variants: suite.VariantWithOverride,
+	}
+	mockContext := &context.Context{
+		AppName: "test",
+	}
+	expectedPayload := Payload{
+		Type:  "string",
+		Value: "Test 4",
+	}
+	variantSetup := VariantCollection{
+		GroupId:  mockFeature.Name,
+		Variants: mockFeature.Variants,
+	}.GetVariant(mockContext)
+	suite.Equal("VarG", variantSetup.Name, "Should return VarG")
+	suite.Equal(true, variantSetup.Enabled, "Should be equal")
+	suite.Equal(expectedPayload, variantSetup.Payload, "Should be equal")
+}
+
+func (suite *VariantTestSuite) TestGetVariant_OverrideOnEnvironment() {
+	mockFeature := Feature{
+		Name:     "test.variants",
+		Enabled:  true,
+		Variants: suite.VariantWithOverride,
+	}
+	mockContext := &context.Context{
+		Environment: "development",
+	}
+	expectedPayload := Payload{
+		Type:  "string",
+		Value: "Test 4",
+	}
+	variantSetup := VariantCollection{
+		GroupId:  mockFeature.Name,
+		Variants: mockFeature.Variants,
+	}.GetVariant(mockContext)
+	suite.Equal("VarG", variantSetup.Name, "Should return VarG")
+	suite.Equal(true, variantSetup.Enabled, "Should be equal")
+	suite.Equal(expectedPayload, variantSetup.Payload, "Should be equal")
 }
